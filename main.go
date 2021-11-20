@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -55,15 +57,43 @@ func constructAddress(address string, port int) string {
 	return fmt.Sprintf("%s:%d", address, port)
 }
 
-func main() {
-	config := parseConfig()
-	for i := config.startPort; i <= config.endPort; i++ {
-		conn, err := net.Dial("tcp", constructAddress(config.address, i))
+func worker(address string, ports chan int, res chan int) {
+	for port := range ports {
+		d := net.Dialer{Timeout: 5 * time.Second}
+		conn, err := d.Dial("tcp", constructAddress(address, port))
 		if err != nil {
+			res <- 0
 			continue
-		} else {
-			fmt.Printf("%d open.\n", i)
 		}
 		conn.Close()
+		res <- port
+	}
+}
+
+func main() {
+	config := parseConfig()
+	portsChan := make(chan int, config.concurrency)
+	scanRes := make(chan int)
+	var resSlice []int
+	for i := 0; i <= cap(portsChan); i++ {
+		go worker(config.address, portsChan, scanRes)
+	}
+	go func() {
+		for port := config.startPort; port <= config.endPort; port++ {
+			portsChan <- port
+		}
+	}()
+	for i := config.startPort; i <= config.endPort; i++ {
+		port := <-scanRes
+		if port != 0 {
+			resSlice = append(resSlice, port)
+		}
+	}
+	close(portsChan)
+	close(scanRes)
+
+	sort.Ints(resSlice)
+	for _, openPort := range resSlice {
+		fmt.Printf("%v open.\n", openPort)
 	}
 }
