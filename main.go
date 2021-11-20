@@ -16,6 +16,7 @@ const (
 	defaultEndPort        string = "80"
 	defaultConcurrency    int    = 50
 	defaultMaxConcurrency bool   = false
+	defaultTimeout        int    = 5
 )
 
 type Config struct {
@@ -24,6 +25,7 @@ type Config struct {
 	endPort        int
 	concurrency    int
 	maxConcurrency bool
+	timeout        time.Duration
 }
 
 func parsePortString(ports string) (int, int) {
@@ -46,6 +48,7 @@ func parseConfig() Config {
 	port := flag.String("port", defaultEndPort, "")
 	concurrency := flag.Int("c", defaultConcurrency, "")
 	maxConcurrency := flag.Bool("max-c", defaultMaxConcurrency, "")
+	timeout := flag.Int("t", defaultTimeout, "")
 	flag.Parse()
 	startPort, endPort := parsePortString(*port)
 	if *maxConcurrency {
@@ -56,6 +59,7 @@ func parseConfig() Config {
 		startPort:   startPort,
 		endPort:     endPort,
 		concurrency: *concurrency,
+		timeout:     time.Duration(*timeout) * time.Second,
 	}
 }
 
@@ -63,9 +67,9 @@ func constructAddress(address string, port int) string {
 	return fmt.Sprintf("%s:%d", address, port)
 }
 
-func worker(address string, ports chan int, res chan int) {
+func worker(address string, timeout time.Duration, ports chan int, res chan int) {
 	for port := range ports {
-		d := net.Dialer{Timeout: 5 * time.Second}
+		d := net.Dialer{Timeout: timeout}
 		conn, err := d.Dial("tcp", constructAddress(address, port))
 		if err != nil {
 			res <- 0
@@ -82,7 +86,7 @@ func main() {
 	scanRes := make(chan int)
 	var resSlice []int
 	for i := 0; i <= cap(portsChan); i++ {
-		go worker(config.address, portsChan, scanRes)
+		go worker(config.address, config.timeout, portsChan, scanRes)
 	}
 	go func() {
 		for port := config.startPort; port <= config.endPort; port++ {
