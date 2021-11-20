@@ -11,17 +11,19 @@ import (
 )
 
 const (
-	defaultAddress     string = "scanme.nmap.org"
-	defaultStartPort   string = "80"
-	defaultEndPort     string = "80"
-	defaultConcurrency int    = 50
+	defaultAddress        string = "scanme.nmap.org"
+	defaultStartPort      string = "80"
+	defaultEndPort        string = "80"
+	defaultConcurrency    int    = 50
+	defaultMaxConcurrency bool   = false
 )
 
 type Config struct {
-	address     string
-	startPort   int
-	endPort     int
-	concurrency int
+	address        string
+	startPort      int
+	endPort        int
+	concurrency    int
+	maxConcurrency bool
 }
 
 func parsePortString(ports string) (int, int) {
@@ -43,8 +45,12 @@ func parseConfig() Config {
 	address := flag.String("address", defaultAddress, "")
 	port := flag.String("port", defaultEndPort, "")
 	concurrency := flag.Int("c", defaultConcurrency, "")
+	maxConcurrency := flag.Bool("max-c", defaultMaxConcurrency, "")
 	flag.Parse()
 	startPort, endPort := parsePortString(*port)
+	if *maxConcurrency {
+		*concurrency = endPort - startPort
+	}
 	return Config{
 		address:     *address,
 		startPort:   startPort,
