@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
+	"strconv"
+	"strings"
 )
 
 const (
 	defaultAddress     string = "scanme.nmap.org"
-	defaultStartPort   int    = 80
-	defaultEndPort     int    = 80
+	defaultStartPort   string = "80"
+	defaultEndPort     string = "80"
 	defaultConcurrency int    = 50
 )
 
@@ -21,15 +22,31 @@ type Config struct {
 	concurrency int
 }
 
+func parsePortString(ports string) (int, int) {
+	var start, end string
+	if strings.Contains(ports, "-") {
+		portSplit := strings.Split(ports, "-")
+		start = portSplit[0]
+		end = portSplit[1]
+	} else {
+		start = ports
+		end = ports
+	}
+	startInt, _ := strconv.Atoi(start)
+	endInt, _ := strconv.Atoi(end)
+	return startInt, endInt
+}
+
 func parseConfig() Config {
-	address := flag.String("addresss", defaultAddress, "")
-	port := flag.Int("port", defaultEndPort, "")
+	address := flag.String("address", defaultAddress, "")
+	port := flag.String("port", defaultEndPort, "")
 	concurrency := flag.Int("c", defaultConcurrency, "")
 	flag.Parse()
+	startPort, endPort := parsePortString(*port)
 	return Config{
 		address:     *address,
-		startPort:   *port,
-		endPort:     *port,
+		startPort:   startPort,
+		endPort:     endPort,
 		concurrency: *concurrency,
 	}
 }
@@ -40,9 +57,28 @@ func constructAddress(address string, port int) string {
 
 func main() {
 	config := parseConfig()
-	_, err := net.Dial("tcp", constructAddress(config.address, config.startPort))
-	if err != nil {
-		log.Fatal(err)
+	for i := config.startPort; i <= config.endPort; i++ {
+		conn, err := net.Dial("tcp", constructAddress(config.address, i))
+		if err != nil {
+			continue
+		} else {
+			fmt.Printf("%d open.\n", i)
+		}
+		conn.Close()
 	}
-	fmt.Printf("%d open.\n", config.startPort)
 }
+
+//
+//func main2() {
+//	config := parseConfig()
+//	fmt.Println(config)
+//	for i := config.startPort; i <= config.endPort; i++ {
+//		conn, err := net.Dial("tcp", constructAddress(config.address, config.startPort))
+//		if err == nil {
+//			fmt.Printf("%d open.\n", i)
+//		} else {
+//			continue
+//		}
+//		conn.Close()
+//	}
+//}
