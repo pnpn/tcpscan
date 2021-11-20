@@ -67,18 +67,3 @@ func main() {
 		conn.Close()
 	}
 }
-
-//
-//func main2() {
-//	config := parseConfig()
-//	fmt.Println(config)
-//	for i := config.startPort; i <= config.endPort; i++ {
-//		conn, err := net.Dial("tcp", constructAddress(config.address, config.startPort))
-//		if err == nil {
-//			fmt.Printf("%d open.\n", i)
-//		} else {
-//			continue
-//		}
-//		conn.Close()
-//	}
-//}
