@@ -21,4 +21,3 @@ func worker(address string, timeout time.Duration, ports chan int, res chan int)
 		res <- port
 	}
 }
-

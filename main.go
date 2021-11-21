@@ -5,7 +5,6 @@ import (
 	"sort"
 )
 
-
 func main() {
 	config := parseConfig()
 	portsChan := make(chan int, config.concurrency)
