@@ -11,7 +11,7 @@ func main() {
 	scanRes := make(chan int)
 	var resSlice []int
 	for i := 0; i <= cap(portsChan); i++ {
-		go worker(config.address, config.timeout, portsChan, scanRes)
+		go worker(config, portsChan, scanRes)
 	}
 	go func() {
 		for _, port := range config.ports {

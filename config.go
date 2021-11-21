@@ -15,7 +15,7 @@ const (
 	defaultTimeout        int    = 5
 	defaultPort           string = "80"
 	defaultRandomWait     bool   = false
-	deafultWaitTime       int    = 1
+	defaultWaitTime       int    = 0
 )
 
 type Config struct {
@@ -54,17 +54,14 @@ func parsePortString(ports string) []int {
 }
 
 func parseConfig() Config {
-	var randomWait boot = false
 	address := flag.String("address", defaultAddress, "")
 	port := flag.String("port", defaultPort, "")
 	concurrency := flag.Int("c", defaultConcurrency, "")
 	maxConcurrency := flag.Bool("max-c", defaultMaxConcurrency, "")
 	timeout := flag.Int("t", defaultTimeout, "")
-	wait := flag.Int("w", deafultWaitTime, "")
+	wait := flag.Int("w", defaultWaitTime, "")
+	randomWaitFlag := flag.Bool("rw", false, "")
 	flag.Parse()
-	if *wait == -1 {
-		randomWait = true
-	}
 	ports := parsePortString(*port)
 	if *maxConcurrency {
 		*concurrency = len(ports)
@@ -74,7 +71,7 @@ func parseConfig() Config {
 		concurrency: *concurrency,
 		timeout:     time.Duration(*timeout) * time.Second,
 		ports:       ports,
-		randomWait:  randomWait,
-		waitTime: wait
+		randomWait:  *randomWaitFlag,
+		waitTime:    *wait,
 	}
 }
